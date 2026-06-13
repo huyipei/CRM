@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AI CRM">
+<meta name="theme-color" content="#0D1B2A">
+<title>AI CRM 2.0</title>
+<style>
+:root {
+  --navy:#0D1B2A; --slate:#1B3A5C; --slate-light:#234B73;
+  --gold:#C9A84C; --gold-light:#E8C46A;
+  --white:#F0F4F8; --muted:#8DA0B3;
+  --green:#2ECC71; --amber:#F39C12; --red:#E74C3C;
+  --card-bg:#162C44; --border:rgba(201,168,76,0.2);
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--navy);color:var(--white);height:100dvh;overflow:hidden;display:flex;flex-direction:column;}
+
+/* Login */
+.login-screen{position:fixed;inset:0;background:var(--navy);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;padding-top:calc(40px + var(--safe-top));}
+.login-logo{width:88px;height:88px;border-radius:24px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-size:40px;margin-bottom:20px;box-shadow:0 8px 32px rgba(201,168,76,0.3);}
+.login-title{font-size:28px;font-weight:800;color:var(--white);margin-bottom:6px;}
+.login-sub{font-size:14px;color:var(--muted);margin-bottom:36px;text-align:center;line-height:1.6;}
+.login-form{width:100%;max-width:360px;}
+.login-input{width:100%;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:16px 18px;color:var(--white);font-size:16px;outline:none;margin-bottom:12px;-webkit-appearance:none;}
+.login-input:focus{border-color:var(--gold);}
+.login-input::placeholder{color:var(--muted);}
+.login-btn{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--navy);border:none;border-radius:14px;padding:16px;font-size:17px;font-weight:800;cursor:pointer;margin-top:4px;}
+.login-gdrive{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:14px;font-size:15px;font-weight:600;color:var(--white);cursor:pointer;margin-top:10px;}
+.login-note{font-size:11px;color:var(--muted);text-align:center;margin-top:20px;line-height:1.6;}
+.sync-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;}
+.sync-cloud{background:rgba(46,204,113,0.15);color:var(--green);}
+.sync-local{background:rgba(243,156,18,0.15);color:var(--amber);}
+.sync-syncing{background:rgba(201,168,76,0.15);color:var(--gold);}
+
+/* Header */
+.header{background:linear-gradient(135deg,#0D1B2A 0%,#1B3A5C 100%);padding:16px 20px 12px;padding-top:calc(16px + var(--safe-top));border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.header-left{display:flex;flex-direction:column;}
+.header-title{font-size:20px;font-weight:700;color:var(--gold);}
+.header-sub{font-size:11px;color:var(--muted);margin-top:1px;display:flex;align-items:center;gap:6px;}
+.header-btn{background:var(--gold);color:var(--navy);border:none;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;}
+
+/* Main */
+.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(80px + var(--safe-bottom));}
+
+/* Bottom Nav */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#0A1520;border-top:1px solid var(--border);display:flex;padding-bottom:var(--safe-bottom);z-index:100;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;cursor:pointer;gap:3px;border:none;background:none;color:var(--muted);font-size:10px;transition:color 0.2s;}
+.nav-item.active{color:var(--gold);}
+.nav-item svg{width:22px;height:22px;}
+
+/* Pages */
+.page{display:none;}
+.page.active{display:block;}
+
+/* Cards */
+.stat-card{background:var(--card-bg);border-radius:16px;padding:16px;border:1px solid var(--border);position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),transparent);}
+.stat-card.full{grid-column:1/-1;}
+.stat-label{font-size:11px;color:var(--muted);margin-bottom:6px;}
+.stat-value{font-size:32px;font-weight:700;color:var(--gold);}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+.dashboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px;}
+.funnel-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
+.funnel-row:last-child{border-bottom:none;}
+.funnel-label{font-size:13px;color:var(--white);}
+.funnel-count{font-size:15px;font-weight:700;color:var(--gold);}
+
+/* AI Card */
+.ai-card{background:linear-gradient(135deg,#1a2a4a,#0f2035);border:1px solid rgba(201,168,76,0.3);border-radius:16px;padding:16px;margin:0 16px 12px;}
+.ai-card-title{font-size:13px;font-weight:700;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.ai-insight{font-size:13px;color:var(--white);line-height:1.6;margin-bottom:8px;}
+.ai-insight:last-child{margin-bottom:0;}
+.ai-loading{color:var(--muted);font-size:13px;display:flex;align-items:center;gap:8px;}
+.ai-btn{background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);color:var(--gold);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;width:100%;}
+
+/* Search & Filter */
+.search-bar{margin:0 16px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;}
+.search-bar input{flex:1;background:none;border:none;color:var(--white);font-size:14px;outline:none;}
+.search-bar input::placeholder{color:var(--muted);}
+.filter-pills{display:flex;gap:8px;padding:0 16px 12px;overflow-x:auto;scrollbar-width:none;}
+.filter-pills::-webkit-scrollbar{display:none;}
+.pill{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--card-bg);color:var(--muted);cursor:pointer;}
+.pill.active{background:var(--gold);color:var(--navy);border-color:var(--gold);}
+
+/* Client Cards */
+.client-list{padding:0 16px;display:flex;flex-direction:column;gap:10px;}
+.client-card{background:var(--card-bg);border-radius:16px;padding:14px 16px;border:1px solid var(--border);cursor:pointer;transition:transform 0.15s;}
+.client-card:active{transform:scale(0.98);}
+.client-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;}
+.client-name{font-size:16px;font-weight:700;color:var(--white);}
+.client-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+.client-needs{font-size:12px;color:var(--gold);margin-top:6px;}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;}
+.badge-a{background:rgba(201,168,76,0.2);color:var(--gold);}
+.badge-b{background:rgba(46,204,113,0.2);color:var(--green);}
+.badge-c{background:rgba(127,140,141,0.2);color:var(--muted);}
+.client-remind{font-size:11px;padding:3px 8px;border-radius:8px;font-weight:600;}
+.remind-today{background:rgba(231,76,60,0.2);color:var(--red);}
+.remind-soon{background:rgba(243,156,18,0.2);color:var(--amber);}
+.remind-ok{background:rgba(46,204,113,0.15);color:var(--green);}
+.remind-none{background:rgba(127,140,141,0.15);color:var(--muted);}
+
+/* Section Header */
+.section-header{padding:20px 16px 8px;display:flex;align-items:center;justify-content:space-between;}
+.section-title{font-size:16px;font-weight:700;color:var(--white);}
+.section-count{font-size:12px;color:var(--muted);background:var(--card-bg);padding:3px 10px;border-radius:10px;}
+
+/* Tab Bar */
+.tab-bar{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;flex-shrink:0;}
+.tab-bar::-webkit-scrollbar{display:none;}
+.tab-item{flex-shrink:0;padding:12px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+.tab-item.active{color:var(--gold);border-bottom-color:var(--gold);}
+
+/* Track/Policy/Family/Referral Cards */
+.track-card,.policy-card,.tree-card,.referral-card,.recruit-card{background:var(--card-bg);border-radius:16px;padding:14px 16px;border:1px solid var(--border);margin:0 16px 10px;cursor:pointer;}
+.track-card:active,.recruit-card:active{transform:scale(0.98);}
+.track-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.track-client{font-size:15px;font-weight:700;color:var(--white);}
+.track-date{font-size:11px;color:var(--muted);}
+.track-content{font-size:13px;color:var(--muted);line-height:1.5;}
+.tree-name{font-size:16px;font-weight:700;color:var(--white);margin-bottom:10px;}
+.tree-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.tree-cell{background:var(--slate);border-radius:10px;padding:8px 10px;}
+.tree-role{font-size:10px;color:var(--muted);margin-bottom:2px;}
+.tree-person{font-size:13px;color:var(--white);}
+.referral-arrow{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:14px;}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:flex-end;}
+.modal-overlay.open{display:flex;}
+.modal{background:#162C44;border-radius:24px 24px 0 0;width:100%;max-height:92dvh;overflow-y:auto;padding-bottom:calc(20px + var(--safe-bottom));animation:slideUp 0.3s ease;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:40px;height:4px;background:var(--muted);border-radius:2px;margin:12px auto 4px;}
+.modal-header{padding:8px 20px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.modal-title{font-size:18px;font-weight:700;color:var(--white);}
+.modal-close{width:32px;height:32px;border-radius:50%;background:var(--slate);border:none;color:var(--white);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.modal-body{padding:16px 20px;}
+
+/* AI Analysis Modal */
+.ai-modal-content{background:var(--navy);border-radius:16px;padding:16px;margin-bottom:12px;}
+.ai-section{margin-bottom:16px;}
+.ai-section-title{font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+.ai-section-body{font-size:14px;color:var(--white);line-height:1.7;}
+.ai-tag{display:inline-block;padding:3px 10px;border-radius:8px;font-size:12px;font-weight:600;margin:3px;}
+.ai-tag-high{background:rgba(231,76,60,0.15);color:var(--red);}
+.ai-tag-med{background:rgba(243,156,18,0.15);color:var(--amber);}
+.ai-tag-low{background:rgba(46,204,113,0.15);color:var(--green);}
+
+/* Form */
+.form-group{margin-bottom:16px;}
+.form-label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:0.5px;}
+.form-input{width:100%;background:var(--slate);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--white);font-size:15px;outline:none;-webkit-appearance:none;}
+.form-input:focus{border-color:var(--gold);}
+.form-select{width:100%;background:var(--slate);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--white);font-size:15px;outline:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238DA0B3' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.btn-primary{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--navy);border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px;}
+.btn-secondary{width:100%;background:var(--slate);color:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;}
+.btn-danger{width:100%;background:rgba(231,76,60,0.15);color:var(--red);border:1px solid rgba(231,76,60,0.3);border-radius:14px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;}
+.btn-ai{width:100%;background:linear-gradient(135deg,#1a2a4a,#0f2035);color:var(--gold);border:1px solid rgba(201,168,76,0.3);border-radius:14px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;}
+
+/* Profile */
+.profile-header{background:linear-gradient(135deg,var(--slate) 0%,var(--slate-light) 100%);padding:24px 20px;text-align:center;border-bottom:1px solid var(--border);}
+.profile-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:var(--navy);margin:0 auto 12px;}
+.profile-name{font-size:20px;font-weight:700;color:var(--white);}
+.profile-title{font-size:13px;color:var(--muted);margin-top:2px;}
+.menu-item{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;}
+.menu-item-left{display:flex;align-items:center;gap:12px;font-size:15px;color:var(--white);}
+.menu-icon{width:36px;height:36px;border-radius:10px;background:var(--slate);display:flex;align-items:center;justify-content:center;font-size:18px;}
+
+/* Tag chips */
+.tag-chip{display:inline-block;padding:3px 10px;border-radius:8px;font-size:11px;font-weight:600;margin:2px;}
+.tag-status-1{background:rgba(46,204,113,0.15);color:var(--green);}
+.tag-status-2{background:rgba(243,156,18,0.15);color:var(--amber);}
+.tag-status-3{background:rgba(201,168,76,0.15);color:var(--gold);}
+.tag-status-4{background:rgba(231,76,60,0.15);color:var(--red);}
+
+/* Empty State */
+.empty-state{text-align:center;padding:60px 32px;color:var(--muted);}
+.empty-icon{font-size:48px;margin-bottom:12px;}
+.empty-text{font-size:15px;}
+.empty-sub{font-size:13px;margin-top:6px;color:rgba(141,160,179,0.6);}
+
+/* Toast */
+.toast{position:fixed;top:calc(20px + var(--safe-top));left:50%;transform:translateX(-50%) translateY(-80px);background:#1B3A5C;border:1px solid var(--gold);color:var(--white);padding:10px 20px;border-radius:20px;font-size:14px;font-weight:600;z-index:999;transition:transform 0.3s ease;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* Spinner */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:16px;height:16px;border:2px solid rgba(201,168,76,0.3);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;}
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-logo">📊</div>
+  <div class="login-title">AI CRM 2.0</div>
+  <div class="login-sub">智能保險業務管理系統<br>支援 Google Drive 雲端同步</div>
+  <div class="login-form">
+    <input class="login-input" id="loginName" placeholder="請輸入您的姓名" maxlength="20">
+    <input class="login-input" id="loginTitle" placeholder="職稱（選填）" maxlength="30">
+    <button class="login-btn" onclick="doLogin()">開始使用（本機）</button>
+    <button class="login-gdrive" onclick="doGDriveLogin()">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#4285F4" d="M24 9.5l-4.5 7.8H8.3L12.8 9.5z"/><path fill="#34A853" d="M43.7 33.5L39.2 25.7H28.5l4.5 7.8z"/><path fill="#FBBC04" d="M8.3 17.3l4.5 7.8 4.5-7.8z"/><path fill="#4285F4" d="M24 9.5l4.5 7.8H14.5z"/><path fill="#34A853" d="M33 25.1H15l-4.5 7.8h27z"/><path fill="#EA4335" d="M10.5 32.9L15 25.1l-4.5-7.8-4.5 7.8z"/></svg>
+      使用 Google Drive 同步登入
+    </button>
+  </div>
+  <div class="login-note">本機模式：資料存於裝置，無需網路<br>雲端模式：資料同步至 Google Drive</div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Header -->
+<div class="header" id="appHeader">
+  <div class="header-left">
+    <div class="header-title" id="headerTitle">AI CRM</div>
+    <div class="header-sub">
+      <span id="headerSub">儀表板</span>
+      <span id="syncBadge" class="sync-badge sync-local">📱 本機</span>
+    </div>
+  </div>
+  <button class="header-btn" id="headerBtn" onclick="openAddModal()" style="display:none">＋ 新增</button>
+</div>
+
+<!-- Main Content -->
+<div class="main" id="mainContent">
+
+  <!-- Dashboard -->
+  <div class="page active" id="page-dashboard">
+    <div class="ai-card" id="aiDashCard">
+      <div class="ai-card-title">🤖 AI 今日洞察</div>
+      <div id="aiDashInsight"><div class="ai-loading"><div class="spinner"></div> 分析中...</div></div>
+      <button class="ai-btn" onclick="runDashboardAI()">🔄 重新分析</button>
+    </div>
+    <div class="dashboard-grid">
+      <div class="stat-card"><div class="stat-label">總客戶數</div><div class="stat-value" id="totalClients">0</div><div class="stat-sub">位客戶</div></div>
+      <div class="stat-card"><div class="stat-label">A 級核心</div><div class="stat-value" id="aLevelCount">0</div><div class="stat-sub">位客戶</div></div>
+      <div class="stat-card"><div class="stat-label">今日待聯絡</div><div class="stat-value" id="todayContact" style="color:var(--red)">0</div><div class="stat-sub">需要行動</div></div>
+      <div class="stat-card"><div class="stat-label">本週生日</div><div class="stat-value" id="birthdayCount" style="color:var(--green)">0</div><div class="stat-sub">位客戶</div></div>
+      <div class="stat-card full"><div class="stat-label" style="margin-bottom:10px">業績漏斗</div><div id="funnelRows"></div></div>
+      <div class="stat-card full"><div class="stat-label" style="margin-bottom:10px">資產級距分布</div><div id="assetRows"></div></div>
+    </div>
+  </div>
+
+  <!-- Clients -->
+  <div class="page" id="page-clients">
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--muted)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" placeholder="搜尋客戶姓名、職業..." id="clientSearch" oninput="renderClients()">
+    </div>
+    <div class="filter-pills">
+      <div class="pill active" onclick="setFilter('all',this)">全部</div>
+      <div class="pill" onclick="setFilter('A級（核心客戶）',this)">A 級</div>
+      <div class="pill" onclick="setFilter('B級（潛力客戶）',this)">B 級</div>
+      <div class="pill" onclick="setFilter('C級（一般客戶）',this)">C 級</div>
+      <div class="pill" onclick="setFilter('remind',this)">待聯絡</div>
+    </div>
+    <div class="client-list" id="clientList"></div>
+  </div>
+
+  <!-- Tracking -->
+  <div class="page" id="page-tracking">
+    <div class="tab-bar">
+      <div class="tab-item active" onclick="switchTab('track',this)">追蹤紀錄</div>
+      <div class="tab-item" onclick="switchTab('policy',this)">保單總覽</div>
+      <div class="tab-item" onclick="switchTab('family',this)">家庭樹</div>
+      <div class="tab-item" onclick="switchTab('referral',this)">轉介紹</div>
+    </div>
+    <div id="tab-track"><div id="trackList"></div></div>
+    <div id="tab-policy" style="display:none"><div id="policyList"></div></div>
+    <div id="tab-family" style="display:none"><div id="familyList"></div></div>
+    <div id="tab-referral" style="display:none"><div id="referralList"></div></div>
+  </div>
+
+  <!-- Recruit -->
+  <div class="page" id="page-recruit">
+    <div class="section-header">
+      <span class="section-title">招募對象</span>
+      <span class="section-count" id="recruitCount">0 位</span>
+    </div>
+    <div id="recruitList"></div>
+  </div>
+
+  <!-- Profile -->
+  <div class="page" id="page-profile">
+    <div class="profile-header">
+      <div class="profile-avatar" id="profileAvatar">A</div>
+      <div class="profile-name" id="profileName">使用者</div>
+      <div class="profile-title" id="profileTitle">保險業務顧問</div>
+      <div style="margin-top:8px" id="profileSyncStatus"></div>
+    </div>
+    <div style="padding:16px 0;">
+      <div class="menu-item" onclick="syncToGDrive()"><div class="menu-item-left"><div class="menu-icon">☁️</div>立即同步至 Google Drive</div><span style="color:var(--muted)">›</span></div>
+      <div class="menu-item" onclick="loadFromGDrive()"><div class="menu-item-left"><div class="menu-icon">📥</div>從 Google Drive 載入</div><span style="color:var(--muted)">›</span></div>
+      <div class="menu-item" onclick="exportData()"><div class="menu-item-left"><div class="menu-icon">📤</div>匯出資料（JSON）</div><span style="color:var(--muted)">›</span></div>
+      <div class="menu-item" onclick="document.getElementById('importFile').click()"><div class="menu-item-left"><div class="menu-icon">📂</div>匯入資料（JSON）</div><span style="color:var(--muted)">›</span></div>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+      <div class="menu-item" onclick="editProfile()"><div class="menu-item-left"><div class="menu-icon">✏️</div>修改姓名 / 職稱</div><span style="color:var(--muted)">›</span></div>
+      <div class="menu-item" onclick="clearAllData()"><div class="menu-item-left"><div class="menu-icon">🗑️</div><span style="color:var(--red)">清除所有資料</span></div><span style="color:var(--muted)">›</span></div>
+      <div class="menu-item" onclick="doLogout()"><div class="menu-item-left"><div class="menu-icon">🚪</div><span style="color:var(--muted)">登出</span></div><span style="color:var(--muted)">›</span></div>
+      <div style="padding:20px;color:var(--muted);font-size:12px;text-align:center;line-height:1.6;">AI CRM 2.0 · 資料儲存於本機與 Google Drive</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="switchPage('dashboard',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>儀表板
+  </button>
+  <button class="nav-item" onclick="switchPage('clients',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>客戶
+  </button>
+  <button class="nav-item" onclick="switchPage('tracking',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>記錄
+  </button>
+  <button class="nav-item" onclick="switchPage('recruit',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>招募
+  </button>
+  <button class="nav-item" onclick="switchPage('profile',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>我的
+  </button>
+</nav>
+
+<!-- Add Client Modal -->
+<div class="modal-overlay" id="addClientModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="addModalTitle">新增客戶</span>
+      <button class="modal-close" onclick="closeModal('addClientModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editClientId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">姓名 *</label><input class="form-input" id="f_name" placeholder="客戶姓名"></div>
+        <div class="form-group"><label class="form-label">年齡</label><input class="form-input" id="f_age" type="number" placeholder="歲"></div>
+      </div>
+      <div class="form-group"><label class="form-label">職業</label><input class="form-input" id="f_job" placeholder="職業 / 公司 / 職位"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">等級</label>
+          <select class="form-select" id="f_level">
+            <option value="">選擇等級</option>
+            <option value="A級（核心客戶）">A 級（核心客戶）</option>
+            <option value="B級（潛力客戶）">B 級（潛力客戶）</option>
+            <option value="C級（一般客戶）">C 級（一般客戶）</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">資產估計</label>
+          <select class="form-select" id="f_asset">
+            <option value="">選擇資產</option>
+            <option>1000萬以下</option><option>1000萬～3000萬</option>
+            <option>3000萬～5000萬</option><option>5000萬～1億</option>
+            <option>1億～3億</option><option>3億以上</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">主要需求</label>
+          <select class="form-select" id="f_need">
+            <option value="">選擇需求</option>
+            <option>退休</option><option>傳承</option><option>稅務</option>
+            <option>醫療</option><option>長照</option><option>投資</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">狀態</label>
+          <select class="form-select" id="f_status">
+            <option value="">選擇狀態</option>
+            <option>未接觸</option><option>已聯絡</option><option>已面談</option>
+            <option>已提案</option><option>已成交</option><option>售後服務</option>
+            <option>暫緩</option><option>拒絕</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">電話</label><input class="form-input" id="f_phone" type="tel" placeholder="0912-345-678"></div>
+        <div class="form-group"><label class="form-label">LINE ID</label><input class="form-input" id="f_line" placeholder="LINE ID"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">最後聯絡</label><input class="form-input" id="f_lastContact" type="date"></div>
+        <div class="form-group"><label class="form-label">下次聯絡</label><input class="form-input" id="f_nextContact" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">生日</label><input class="form-input" id="f_birthday" type="date"></div>
+        <div class="form-group"><label class="form-label">來源</label>
+          <select class="form-select" id="f_source">
+            <option value="">選擇來源</option>
+            <option>舊客戶</option><option>轉介紹</option><option>社團</option>
+            <option>臉書</option><option>LINE</option><option>活動</option>
+            <option>陌生開發</option><option>其他</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">備註</label><input class="form-input" id="f_note" placeholder="其他備註"></div>
+      <button class="btn-ai" onclick="analyzeClient()">🤖 AI 分析此客戶</button>
+      <button class="btn-primary" onclick="saveClient()">儲存客戶</button>
+      <button class="btn-danger" id="deleteClientBtn" onclick="deleteClient()" style="display:none">刪除此客戶</button>
+      <button class="btn-secondary" onclick="closeModal('addClientModal')">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI Analysis Modal -->
+<div class="modal-overlay" id="aiModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">🤖 AI 客戶分析</span>
+      <button class="modal-close" onclick="closeModal('aiModal')">×</button>
+    </div>
+    <div class="modal-body" id="aiModalBody">
+      <div class="ai-loading"><div class="spinner"></div> AI 分析中，請稍候...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Track Modal -->
+<div class="modal-overlay" id="addTrackModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><span class="modal-title">新增追蹤紀錄</span><button class="modal-close" onclick="closeModal('addTrackModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">客戶 *</label><select class="form-select" id="t_client"></select></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">日期</label><input class="form-input" id="t_date" type="date"></div>
+        <div class="form-group"><label class="form-label">接觸方式</label>
+          <select class="form-select" id="t_method"><option>電話</option><option>LINE</option><option>面談</option><option>Email</option><option>其他</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">內容摘要 *</label><input class="form-input" id="t_content" placeholder="這次接觸的重點"></div>
+      <div class="form-group"><label class="form-label">需求 / 痛點</label><input class="form-input" id="t_pain" placeholder="發現的需求或痛點"></div>
+      <div class="form-group"><label class="form-label">下一步行動</label><input class="form-input" id="t_next" placeholder="下一步要做什麼"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">下次聯絡</label><input class="form-input" id="t_nextDate" type="date"></div>
+        <div class="form-group"><label class="form-label">狀態</label>
+          <select class="form-select" id="t_status"><option>已聯絡</option><option>已面談</option><option>已提案</option><option>已成交</option><option>售後服務</option></select>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="saveTrack()">儲存紀錄</button>
+      <button class="btn-secondary" onclick="closeModal('addTrackModal')">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Policy Modal -->
+<div class="modal-overlay" id="addPolicyModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><span class="modal-title">新增保單</span><button class="modal-close" onclick="closeModal('addPolicyModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">客戶 *</label><select class="form-select" id="p_client"></select></div>
+      <div class="form-group"><label class="form-label">保險公司</label><input class="form-input" id="p_company" placeholder="保險公司名稱"></div>
+      <div class="form-group"><label class="form-label">商品名稱</label><input class="form-input" id="p_product" placeholder="保險商品"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">年繳保費</label><input class="form-input" id="p_premium" placeholder="元"></div>
+        <div class="form-group"><label class="form-label">保額</label><input class="form-input" id="p_amount" placeholder="元"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">要保人</label><input class="form-input" id="p_owner" placeholder="要保人姓名"></div>
+        <div class="form-group"><label class="form-label">被保險人</label><input class="form-input" id="p_insured" placeholder="被保險人姓名"></div>
+      </div>
+      <div class="form-group"><label class="form-label">受益人 / 備註</label><input class="form-input" id="p_note" placeholder="受益人或其他備註"></div>
+      <button class="btn-primary" onclick="savePolicy()">儲存保單</button>
+      <button class="btn-secondary" onclick="closeModal('addPolicyModal')">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Family Modal -->
+<div class="modal-overlay" id="addFamilyModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><span class="modal-title">新增家庭樹</span><button class="modal-close" onclick="closeModal('addFamilyModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">客戶 *</label><select class="form-select" id="fm_client"></select></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">配偶</label><input class="form-input" id="fm_spouse" placeholder="配偶姓名"></div>
+        <div class="form-group"><label class="form-label">子女</label><input class="form-input" id="fm_children" placeholder="子女姓名（逗號分隔）"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">父母 / 手足</label><input class="form-input" id="fm_parents" placeholder="父母或手足姓名"></div>
+        <div class="form-group"><label class="form-label">關鍵影響人</label><input class="form-input" id="fm_influencer" placeholder="影響決策的人"></div>
+      </div>
+      <div class="form-group"><label class="form-label">傳承風險</label><input class="form-input" id="fm_risk" placeholder="主要傳承風險"></div>
+      <div class="form-group"><label class="form-label">下一步</label><input class="form-input" id="fm_next" placeholder="建議行動"></div>
+      <button class="btn-primary" onclick="saveFamily()">儲存</button>
+      <button class="btn-secondary" onclick="closeModal('addFamilyModal')">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Referral Modal -->
+<div class="modal-overlay" id="addReferralModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><span class="modal-title">新增轉介紹</span><button class="modal-close" onclick="closeModal('addReferralModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">介紹人 *</label><input class="form-input" id="ref_from" placeholder="介紹人姓名"></div>
+        <div class="form-group"><label class="form-label">被介紹人 *</label><input class="form-input" id="ref_to" placeholder="被介紹人姓名"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">關係</label><input class="form-input" id="ref_relation" placeholder="兩人關係"></div>
+        <div class="form-group"><label class="form-label">進度</label>
+          <select class="form-select" id="ref_progress"><option>剛介紹</option><option>已聯絡</option><option>已面談</option><option>已成交</option><option>暫緩</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">備註</label><input class="form-input" id="ref_note" placeholder="備註"></div>
+      <button class="btn-primary" onclick="saveReferral()">儲存</button>
+      <button class="btn-secondary" onclick="closeModal('addReferralModal')">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Recruit Modal -->
+<div class="modal-overlay" id="addRecruitModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><span class="modal-title" id="recruitModalTitle">新增招募對象</span><button class="modal-close" onclick="closeModal('addRecruitModal')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="r_id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">姓名 *</label><input class="form-input" id="r_name" placeholder="姓名"></div>
+        <div class="form-group"><label class="form-label">來源</label>
+          <select class="form-select" id="r_source"><option>同業</option><option>準同業</option><option>大學生/新鮮人</option><option>企業主/斜槓</option><option>親友介紹</option><option>其他</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">目前公司 / 背景</label><input class="form-input" id="r_company" placeholder="現職或背景"></div>
+      <div class="form-group"><label class="form-label">狀態</label>
+        <select class="form-select" id="r_status"><option>尚未接觸</option><option>已聯絡</option><option>已面談</option><option>邀約商說</option><option>準備登錄</option><option>已登錄</option><option>暫緩</option><option>拒絕</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">主要障礙</label><input class="form-input" id="r_obstacle" placeholder="招募的主要障礙"></div>
+      <div class="form-group"><label class="form-label">下一步行動</label><input class="form-input" id="r_next" placeholder="下一步要做什麼"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">最後聯絡</label><input class="form-input" id="r_lastContact" type="date"></div>
+        <div class="form-group"><label class="form-label">下次聯絡</label><input class="form-input" id="r_nextContact" type="date"></div>
+      </div>
+      <button class="btn-primary" onclick="saveRecruit()">儲存</button>
+      <button class="btn-danger" id="deleteRecruitBtn" onclick="deleteRecruit()" style="display:none">刪除</button>
+      <button class="btn-secondary" onclick="closeModal('addRecruitModal')">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- Google API -->
+<script src="https://accounts.google.com/gsi/client" async></script>
+
+<script>
+// ── Config ──
+const GOOGLE_CLIENT_ID = '67563562799-rkji2bvpne02dnjahp3d13o74pi9a0kd.apps.googleusercontent.com';
+const GDRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+const CRM_FILE_NAME = 'alan-crm-data.json';
+
+// ── State ──
+const DB = { clients:[], tracks:[], policies:[], families:[], referrals:[], recruits:[] };
+let gdriveToken = null;
+let gdriveFileId = null;
+let currentPage = 'dashboard';
+let currentFilter = 'all';
+let currentTab = 'track';
+
+// ── LocalStorage ──
+function load() {
+  try {
+    const d = localStorage.getItem('alanCRM');
+    if (d) Object.assign(DB, JSON.parse(d));
+  } catch(e) {}
+}
+function save() {
+  localStorage.setItem('alanCRM', JSON.stringify(DB));
+  if (gdriveToken) autoSyncGDrive();
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// ── Google Drive ──
+async function doGDriveLogin() {
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: GDRIVE_SCOPE + ' https://www.googleapis.com/auth/userinfo.profile',
+    callback: async (resp) => {
+      if (resp.error) { showToast('❌ Google 登入失敗'); return; }
+      gdriveToken = resp.access_token;
+      // Get user info
+      try {
+        const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: { Authorization: 'Bearer ' + gdriveToken }
+        });
+        const info = await r.json();
+        const name = info.given_name || info.name || '使用者';
+        localStorage.setItem('crmUser', JSON.stringify({ name, title:'保險業務顧問', gdrive:true }));
+        document.getElementById('loginScreen').style.display = 'none';
+        initApp(name, '保險業務顧問', true);
+        await loadFromGDriveAuto();
+      } catch(e) {
+        showToast('❌ 取得使用者資訊失敗');
+      }
+    }
+  });
+  client.requestAccessToken();
+}
+
+async function loadFromGDriveAuto() {
+  if (!gdriveToken) return;
+  updateSyncBadge('syncing');
+  try {
+    // Search for existing file
+    const searchResp = await fetch(
+      `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${CRM_FILE_NAME}'&fields=files(id,name)`,
+      { headers: { Authorization: 'Bearer ' + gdriveToken } }
+    );
+    const searchData = await searchResp.json();
+    if (searchData.files && searchData.files.length > 0) {
+      gdriveFileId = searchData.files[0].id;
+      const fileResp = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${gdriveFileId}?alt=media`,
+        { headers: { Authorization: 'Bearer ' + gdriveToken } }
+      );
+      const data = await fileResp.json();
+      Object.assign(DB, data);
+      localStorage.setItem('alanCRM', JSON.stringify(DB));
+      renderDashboard();
+      renderClients();
+      updateSyncBadge('cloud');
+      showToast('☁️ 已從 Google Drive 載入');
+    } else {
+      updateSyncBadge('cloud');
+      showToast('☁️ Google Drive 已連線（新資料）');
+    }
+  } catch(e) {
+    updateSyncBadge('local');
+    showToast('⚠️ 無法載入雲端資料，使用本機');
+  }
+}
+
+async function syncToGDrive() {
+  if (!gdriveToken) { showToast('請先使用 Google Drive 登入'); return; }
+  updateSyncBadge('syncing');
+  showToast('☁️ 同步中...');
+  await autoSyncGDrive();
+}
+
+async function autoSyncGDrive() {
+  if (!gdriveToken) return;
+  try {
+    const content = JSON.stringify(DB);
+    const blob = new Blob([content], { type: 'application/json' });
+    if (gdriveFileId) {
+      // Update existing
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${gdriveFileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: { Authorization: 'Bearer ' + gdriveToken, 'Content-Type': 'application/json' },
+        body: content
+      });
+    } else {
+      // Create new
+      const meta = { name: CRM_FILE_NAME, parents: ['appDataFolder'] };
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+      form.append('file', blob);
+      const resp = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + gdriveToken },
+        body: form
+      });
+      const data = await resp.json();
+      gdriveFileId = data.id;
+    }
+    updateSyncBadge('cloud');
+    const now = new Date().toLocaleTimeString('zh-TW', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('profileSyncStatus').innerHTML = `<span class="sync-badge sync-cloud">☁️ 已同步 ${now}</span>`;
+  } catch(e) {
+    updateSyncBadge('local');
+  }
+}
+
+async function loadFromGDrive() {
+  if (!gdriveToken) { showToast('請先使用 Google Drive 登入'); return; }
+  showToast('📥 載入中...');
+  await loadFromGDriveAuto();
+}
+
+function updateSyncBadge(state) {
+  const b = document.getElementById('syncBadge');
+  if (state === 'cloud') { b.className='sync-badge sync-cloud'; b.textContent='☁️ 雲端同步'; }
+  else if (state === 'syncing') { b.className='sync-badge sync-syncing'; b.textContent='🔄 同步中'; }
+  else { b.className='sync-badge sync-local'; b.textContent='📱 本機'; }
+}
+
+// ── AI Analysis ──
+async function callClaude(prompt) {
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  const data = await resp.json();
+  return data.content?.[0]?.text || '無法取得分析結果';
+}
+
+async function analyzeClient() {
+  const name = document.getElementById('f_name').value || '此客戶';
+  const age = document.getElementById('f_age').value;
+  const job = document.getElementById('f_job').value;
+  const level = document.getElementById('f_level').value;
+  const asset = document.getElementById('f_asset').value;
+  const need = document.getElementById('f_need').value;
+  const status = document.getElementById('f_status').value;
+  const note = document.getElementById('f_note').value;
+
+  openModal('aiModal');
+  document.getElementById('aiModalBody').innerHTML = '<div class="ai-loading"><div class="spinner"></div> AI 分析中，請稍候...</div>';
+
+  const clientTracks = DB.tracks.filter(t => {
+    const c = DB.clients.find(x => x.id === document.getElementById('editClientId').value);
+    return c && t.clientId === c.id;
+  });
+
+  const prompt = `你是一位資深保險業務顧問的AI助理，請用繁體中文分析以下客戶資料，給出具體可執行的建議：
+
+客戶資料：
+- 姓名：${name}
+- 年齡：${age || '未知'}
+- 職業：${job || '未知'}
+- 客戶等級：${level || '未設定'}
+- 資產估計：${asset || '未知'}
+- 主要需求：${need || '未設定'}
+- 目前狀態：${status || '未設定'}
+- 備註：${note || '無'}
+- 追蹤紀錄筆數：${clientTracks.length}
+
+請提供以下分析（每項2-3句話，精簡有力）：
+
+1. **需求深度分析**：根據年齡、職業、資產，推測最可能的保險需求
+2. **成交機率評估**：目前狀態下的成交可能性（高/中/低）及原因
+3. **最佳切入話術**：下次拜訪建議的開場和切入點
+4. **升級建議**：是否需要調整客戶等級，理由為何
+5. **下一步行動**：最具體的一個立即行動建議
+
+格式：直接給出5個分析，不要多餘說明。`;
+
+  try {
+    const result = await callClaude(prompt);
+    document.getElementById('aiModalBody').innerHTML = `
+      <div class="ai-modal-content">
+        <div style="font-size:14px;color:var(--white);line-height:1.8;white-space:pre-wrap">${result}</div>
+      </div>
+      <button class="btn-secondary" onclick="closeModal('aiModal')">關閉</button>`;
+  } catch(e) {
+    document.getElementById('aiModalBody').innerHTML = `<div style="color:var(--red);padding:16px">AI 分析失敗，請確認網路連線</div><button class="btn-secondary" onclick="closeModal('aiModal')">關閉</button>`;
+  }
+}
+
+async function runDashboardAI() {
+  const el = document.getElementById('aiDashInsight');
+  el.innerHTML = '<div class="ai-loading"><div class="spinner"></div> 分析中...</div>';
+
+  const today = new Date().toISOString().slice(0,10);
+  const overdueClients = DB.clients.filter(c => c.nextContact && c.nextContact < today);
+  const aClients = DB.clients.filter(c => c.level === 'A級（核心客戶）');
+  const noContactClients = DB.clients.filter(c => !c.lastContact);
+
+  const prompt = `你是保險業務AI助理，請用繁體中文提供今日業務洞察（每點1句話，最多4點，直接列點）：
+
+目前資料：
+- 總客戶：${DB.clients.length}位
+- A級客戶：${aClients.length}位（${aClients.map(c=>c.name).slice(0,3).join('、')}等）
+- 逾期未聯絡：${overdueClients.length}位（${overdueClients.map(c=>c.name).slice(0,2).join('、')}等）
+- 從未聯絡：${noContactClients.length}位
+- 總追蹤紀錄：${DB.tracks.length}筆
+- 已成交客戶：${DB.clients.filter(c=>c.status==='已成交'||c.status==='售後服務').length}位
+
+請給出今日最重要的業務行動建議，格式：• 一句話建議`;
+
+  try {
+    const result = await callClaude(prompt);
+    el.innerHTML = `<div style="font-size:13px;color:var(--white);line-height:1.8;white-space:pre-wrap">${result}</div>`;
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px">無法連線 AI，請稍後再試</div>';
+  }
+}
+
+// ── Login ──
+function doLogin() {
+  const name = document.getElementById('loginName').value.trim();
+  const title = document.getElementById('loginTitle').value.trim();
+  if (!name) { document.getElementById('loginName').focus(); return; }
+  localStorage.setItem('crmUser', JSON.stringify({ name, title: title || '保險業務顧問', gdrive: false }));
+  document.getElementById('loginScreen').style.display = 'none';
+  initApp(name, title || '保險業務顧問', false);
+}
+
+function doLogout() {
+  if (!confirm('登出後將返回登入畫面，資料不會消失。確定嗎？')) return;
+  localStorage.removeItem('crmUser');
+  gdriveToken = null;
+  location.reload();
+}
+
+function editProfile() {
+  const user = JSON.parse(localStorage.getItem('crmUser') || '{}');
+  const name = prompt('請輸入新姓名', user.name || '');
+  if (!name) return;
+  const title = prompt('請輸入職稱', user.title || '');
+  const updated = { ...user, name: name.trim(), title: (title || '保險業務顧問').trim() };
+  localStorage.setItem('crmUser', updated.gdrive ? JSON.stringify(updated) : JSON.stringify(updated));
+  localStorage.setItem('crmUser', JSON.stringify(updated));
+  initApp(updated.name, updated.title, updated.gdrive);
+  showToast('✅ 已更新');
+}
+
+function initApp(name, title, isCloud) {
+  document.getElementById('profileName').textContent = name;
+  document.getElementById('profileTitle').textContent = title;
+  document.getElementById('profileAvatar').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('headerTitle').textContent = name + ' CRM';
+  updateSyncBadge(isCloud ? 'cloud' : 'local');
+  renderDashboard();
+  renderClients();
+  if (isCloud) runDashboardAI();
+}
+
+// ── Navigation ──
+function switchPage(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  el.classList.add('active');
+  currentPage = page;
+  const titles = { dashboard:'儀表板', clients:'客戶管理', tracking:'記錄管理', recruit:'招募追蹤', profile:'我的帳號' };
+  document.getElementById('headerSub').textContent = titles[page] || '';
+  const btn = document.getElementById('headerBtn');
+  btn.style.display = (page === 'profile' || page === 'dashboard') ? 'none' : 'block';
+  if (page === 'dashboard') { renderDashboard(); runDashboardAI(); }
+  if (page === 'clients') renderClients();
+  if (page === 'tracking') renderTracking();
+  if (page === 'recruit') renderRecruits();
+}
+
+function openAddModal() {
+  if (currentPage === 'clients') openClientModal();
+  else if (currentPage === 'tracking') {
+    if (currentTab === 'track') openTrackModal();
+    else if (currentTab === 'policy') openPolicyModal();
+    else if (currentTab === 'family') openFamilyModal();
+    else openReferralModal();
+  } else if (currentPage === 'recruit') openRecruitModal();
+}
+
+function switchTab(tab, el) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['track','policy','family','referral'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+  renderTracking();
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── Client Modal ──
+function openClientModal(client) {
+  document.getElementById('addModalTitle').textContent = client ? '編輯客戶' : '新增客戶';
+  document.getElementById('deleteClientBtn').style.display = client ? 'block' : 'none';
+  ['name','age','job','level','asset','need','status','phone','line','lastContact','nextContact','birthday','source','note'].forEach(f => {
+    const el = document.getElementById('f_' + f);
+    if (el) el.value = client ? (client[f] || '') : '';
+  });
+  document.getElementById('editClientId').value = client ? client.id : '';
+  openModal('addClientModal');
+}
+
+function openTrackModal() {
+  document.getElementById('t_client').innerHTML = DB.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  document.getElementById('t_date').value = new Date().toISOString().slice(0,10);
+  ['t_content','t_pain','t_next','t_nextDate'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  openModal('addTrackModal');
+}
+
+function openPolicyModal() {
+  document.getElementById('p_client').innerHTML = DB.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  ['p_company','p_product','p_premium','p_amount','p_owner','p_insured','p_note'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  openModal('addPolicyModal');
+}
+
+function openFamilyModal() {
+  document.getElementById('fm_client').innerHTML = DB.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  ['fm_spouse','fm_children','fm_parents','fm_influencer','fm_risk','fm_next'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  openModal('addFamilyModal');
+}
+
+function openReferralModal() {
+  ['ref_from','ref_to','ref_relation','ref_note'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  openModal('addReferralModal');
+}
+
+function openRecruitModal(recruit) {
+  document.getElementById('recruitModalTitle').textContent = recruit ? '編輯招募對象' : '新增招募對象';
+  document.getElementById('deleteRecruitBtn').style.display = recruit ? 'block' : 'none';
+  ['name','source','company','status','obstacle','next','lastContact','nextContact'].forEach(f => {
+    const el = document.getElementById('r_' + f);
+    if (el) el.value = recruit ? (recruit[f] || '') : '';
+  });
+  document.getElementById('r_id').value = recruit ? recruit.id : '';
+  openModal('addRecruitModal');
+}
+
+// ── Save ──
+function saveClient() {
+  const name = document.getElementById('f_name').value.trim();
+  if (!name) { showToast('請輸入客戶姓名'); return; }
+  const editId = document.getElementById('editClientId').value;
+  const fields = ['name','age','job','level','asset','need','status','phone','line','lastContact','nextContact','birthday','source','note'];
+  const data = {};
+  fields.forEach(f => { data[f] = document.getElementById('f_' + f)?.value || ''; });
+  if (editId) {
+    const idx = DB.clients.findIndex(c => c.id === editId);
+    if (idx >= 0) DB.clients[idx] = { ...DB.clients[idx], ...data };
+  } else {
+    DB.clients.push({ id: uid(), ...data });
+  }
+  save(); closeModal('addClientModal'); renderClients(); renderDashboard();
+  showToast(editId ? '✅ 客戶已更新' : '✅ 客戶已新增');
+}
+
+function deleteClient() {
+  const editId = document.getElementById('editClientId').value;
+  if (!editId || !confirm('確定要刪除此客戶？')) return;
+  DB.clients = DB.clients.filter(c => c.id !== editId);
+  save(); closeModal('addClientModal'); renderClients(); renderDashboard();
+  showToast('🗑️ 客戶已刪除');
+}
+
+function saveTrack() {
+  const content = document.getElementById('t_content').value.trim();
+  if (!content) { showToast('請填寫內容摘要'); return; }
+  DB.tracks.push({
+    id: uid(), clientId: document.getElementById('t_client').value,
+    date: document.getElementById('t_date').value, method: document.getElementById('t_method').value,
+    content, pain: document.getElementById('t_pain').value,
+    next: document.getElementById('t_next').value, nextDate: document.getElementById('t_nextDate').value,
+    status: document.getElementById('t_status').value,
+  });
+  save(); closeModal('addTrackModal'); renderTracking(); showToast('✅ 紀錄已新增');
+}
+
+function savePolicy() {
+  DB.policies.push({
+    id: uid(), clientId: document.getElementById('p_client').value,
+    company: document.getElementById('p_company').value, product: document.getElementById('p_product').value,
+    premium: document.getElementById('p_premium').value, amount: document.getElementById('p_amount').value,
+    owner: document.getElementById('p_owner').value, insured: document.getElementById('p_insured').value,
+    note: document.getElementById('p_note').value,
+  });
+  save(); closeModal('addPolicyModal'); renderTracking(); showToast('✅ 保單已新增');
+}
+
+function saveFamily() {
+  const clientId = document.getElementById('fm_client').value;
+  const existing = DB.families.findIndex(f => f.clientId === clientId);
+  const data = { clientId, spouse: document.getElementById('fm_spouse').value, children: document.getElementById('fm_children').value,
+    parents: document.getElementById('fm_parents').value, influencer: document.getElementById('fm_influencer').value,
+    risk: document.getElementById('fm_risk').value, next: document.getElementById('fm_next').value };
+  if (existing >= 0) DB.families[existing] = data; else DB.families.push({ id: uid(), ...data });
+  save(); closeModal('addFamilyModal'); renderTracking(); showToast('✅ 家庭樹已儲存');
+}
+
+function saveReferral() {
+  const from = document.getElementById('ref_from').value.trim();
+  const to = document.getElementById('ref_to').value.trim();
+  if (!from || !to) { showToast('請填寫介紹人和被介紹人'); return; }
+  DB.referrals.push({ id: uid(), from, to, relation: document.getElementById('ref_relation').value,
+    progress: document.getElementById('ref_progress').value, note: document.getElementById('ref_note').value });
+  save(); closeModal('addReferralModal'); renderTracking(); showToast('✅ 轉介紹已新增');
+}
+
+function saveRecruit() {
+  const name = document.getElementById('r_name').value.trim();
+  if (!name) { showToast('請輸入姓名'); return; }
+  const editId = document.getElementById('r_id').value;
+  const fields = ['name','source','company','status','obstacle','next','lastContact','nextContact'];
+  const data = {};
+  fields.forEach(f => { data[f] = document.getElementById('r_' + f)?.value || ''; });
+  if (editId) {
+    const idx = DB.recruits.findIndex(r => r.id === editId);
+    if (idx >= 0) DB.recruits[idx] = { ...DB.recruits[idx], ...data };
+  } else { DB.recruits.push({ id: uid(), ...data }); }
+  save(); closeModal('addRecruitModal'); renderRecruits();
+  showToast(editId ? '✅ 已更新' : '✅ 已新增');
+}
+
+function deleteRecruit() {
+  const editId = document.getElementById('r_id').value;
+  if (!editId || !confirm('確定刪除？')) return;
+  DB.recruits = DB.recruits.filter(r => r.id !== editId);
+  save(); closeModal('addRecruitModal'); renderRecruits(); showToast('🗑️ 已刪除');
+}
+
+// ── Render ──
+function renderDashboard() {
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0,10);
+  const weekEnd = new Date(today); weekEnd.setDate(today.getDate()+7);
+  document.getElementById('totalClients').textContent = DB.clients.length;
+  document.getElementById('aLevelCount').textContent = DB.clients.filter(c => c.level==='A級（核心客戶）').length;
+  document.getElementById('todayContact').textContent = DB.clients.filter(c => c.nextContact && c.nextContact <= todayStr).length;
+  document.getElementById('birthdayCount').textContent = DB.clients.filter(c => {
+    if (!c.birthday) return false;
+    const bd = new Date(c.birthday);
+    const thisYear = new Date(today.getFullYear(), bd.getMonth(), bd.getDate());
+    return thisYear >= today && thisYear <= weekEnd;
+  }).length;
+  document.getElementById('funnelRows').innerHTML = ['已聯絡','已面談','已提案','已成交','售後服務'].map(s => {
+    const count = DB.clients.filter(c => c.status===s).length;
+    return `<div class="funnel-row"><span class="funnel-label">${s}</span><span class="funnel-count">${count}</span></div>`;
+  }).join('');
+  document.getElementById('assetRows').innerHTML = ['1000萬以下','1000萬～3000萬','3000萬～5000萬','5000萬～1億','1億～3億','3億以上'].map(a => {
+    const count = DB.clients.filter(c => c.asset===a).length;
+    return count > 0 ? `<div class="funnel-row"><span class="funnel-label">${a}</span><span class="funnel-count">${count}</span></div>` : '';
+  }).join('');
+}
+
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderClients();
+}
+
+function renderClients() {
+  const search = document.getElementById('clientSearch')?.value.toLowerCase() || '';
+  const today = new Date().toISOString().slice(0,10);
+  let list = DB.clients.filter(c => {
+    if (search && !c.name.toLowerCase().includes(search) && !(c.job||'').toLowerCase().includes(search)) return false;
+    if (currentFilter === 'all') return true;
+    if (currentFilter === 'remind') return c.nextContact && c.nextContact <= today;
+    return c.level === currentFilter;
+  });
+  const el = document.getElementById('clientList');
+  if (list.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-text">沒有符合的客戶</div><div class="empty-sub">點右上角「＋ 新增」加入客戶</div></div>`;
+    return;
+  }
+  el.innerHTML = list.map(c => {
+    const badge = c.level==='A級（核心客戶）'?'badge-a':c.level==='B級（潛力客戶）'?'badge-b':'badge-c';
+    const levelShort = (c.level||'').replace('（核心客戶）','').replace('（潛力客戶）','').replace('（一般客戶）','');
+    let remindClass='remind-none', remindText='未排程';
+    if (c.nextContact) {
+      if (c.nextContact < today) { remindClass='remind-today'; remindText='逾期'; }
+      else if (c.nextContact === today) { remindClass='remind-today'; remindText='今天'; }
+      else {
+        const diff = Math.ceil((new Date(c.nextContact)-new Date(today))/(86400000));
+        remindClass = diff<=7?'remind-soon':'remind-ok';
+        remindText = diff<=7?`${diff}天後`:c.nextContact;
+      }
+    }
+    return `<div class="client-card" onclick="openClientModal(DB.clients.find(x=>x.id==='${c.id}'))">
+      <div class="client-top">
+        <div><div class="client-name">${c.name}</div><div class="client-meta">${c.age?c.age+'歲 · ':''}${c.job||'職業未填'}</div></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          ${levelShort?`<span class="badge ${badge}">${levelShort}</span>`:''}
+          <span class="client-remind ${remindClass}">${remindText}</span>
+        </div>
+      </div>
+      ${c.need||c.asset?`<div class="client-needs">${c.need?'📌 '+c.need:''}${c.need&&c.asset?' · ':''}${c.asset?'💰 '+c.asset:''}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderTracking() {
+  if (currentTab==='track') {
+    const el = document.getElementById('trackList');
+    if (!DB.tracks.length) { el.innerHTML=`<div class="empty-state"><div class="empty-icon">📝</div><div class="empty-text">尚無追蹤紀錄</div><div class="empty-sub">點右上角新增</div></div>`; return; }
+    el.innerHTML = [...DB.tracks].sort((a,b)=>b.date.localeCompare(a.date)).map(t => {
+      const client = DB.clients.find(c=>c.id===t.clientId);
+      return `<div class="track-card">
+        <div class="track-top"><div class="track-client">${client?.name||'?'} <span style="font-size:12px;color:var(--muted);font-weight:400">${t.method}</span></div><div class="track-date">${t.date}</div></div>
+        <div class="track-content">${t.content}</div>
+        ${t.pain?`<div style="font-size:12px;color:var(--amber);margin-top:4px">⚡ ${t.pain}</div>`:''}
+        ${t.next?`<div style="font-size:12px;color:var(--gold);margin-top:4px">→ ${t.next}</div>`:''}
+      </div>`;
+    }).join('');
+  } else if (currentTab==='policy') {
+    const el = document.getElementById('policyList');
+    if (!DB.policies.length) { el.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">尚無保單資料</div><div class="empty-sub">點右上角新增保單</div></div>`; return; }
+    el.innerHTML = DB.policies.map(p => {
+      const client = DB.clients.find(c=>c.id===p.clientId);
+      return `<div class="policy-card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px"><div style="font-size:15px;font-weight:700">${client?.name||'?'}</div><div style="font-size:12px;color:var(--gold)">${p.company}</div></div>
+        <div style="font-size:14px;margin-bottom:6px">${p.product||'—'}</div>
+        <div style="display:flex;gap:16px;font-size:12px;color:var(--muted)">${p.premium?`<span>年繳 ${p.premium}</span>`:''} ${p.amount?`<span>保額 ${p.amount}</span>`:''}</div>
+        ${p.note?`<div style="font-size:12px;color:var(--muted);margin-top:6px">${p.note}</div>`:''}
+      </div>`;
+    }).join('');
+  } else if (currentTab==='family') {
+    const el = document.getElementById('familyList');
+    const withFamily = DB.families.filter(f=>f.spouse||f.children||f.parents);
+    if (!withFamily.length) { el.innerHTML=`<div class="empty-state"><div class="empty-icon">👨‍👩‍👧</div><div class="empty-text">尚無家庭樹資料</div><div class="empty-sub">點右上角新增</div></div>`; return; }
+    el.innerHTML = withFamily.map(f => {
+      const client = DB.clients.find(c=>c.id===f.clientId);
+      return `<div class="tree-card">
+        <div class="tree-name">${client?.name||'?'}</div>
+        <div class="tree-grid">
+          ${f.spouse?`<div class="tree-cell"><div class="tree-role">配偶</div><div class="tree-person">${f.spouse}</div></div>`:''}
+          ${f.children?`<div class="tree-cell"><div class="tree-role">子女</div><div class="tree-person">${f.children}</div></div>`:''}
+          ${f.parents?`<div class="tree-cell"><div class="tree-role">父母/手足</div><div class="tree-person">${f.parents}</div></div>`:''}
+          ${f.influencer?`<div class="tree-cell"><div class="tree-role">關鍵影響人</div><div class="tree-person">${f.influencer}</div></div>`:''}
+        </div>
+        ${f.risk?`<div style="font-size:12px;color:var(--amber);margin-top:8px">⚠️ ${f.risk}</div>`:''}
+        ${f.next?`<div style="font-size:12px;color:var(--gold);margin-top:4px">→ ${f.next}</div>`:''}
+      </div>`;
+    }).join('');
+  } else if (currentTab==='referral') {
+    const el = document.getElementById('referralList');
+    if (!DB.referrals.length) { el.innerHTML=`<div class="empty-state"><div class="empty-icon">🔗</div><div class="empty-text">尚無轉介紹資料</div><div class="empty-sub">點右上角新增</div></div>`; return; }
+    el.innerHTML = DB.referrals.map(r => `<div class="referral-card">
+      <div class="referral-arrow"><span style="font-weight:700">${r.from}</span><span style="color:var(--gold)">→</span><span style="color:var(--gold);font-weight:700">${r.to}</span></div>
+      <div>${r.relation?`<span class="tag-chip tag-status-3">${r.relation}</span>`:''}<span class="tag-chip tag-status-1">${r.progress}</span></div>
+      ${r.note?`<div style="font-size:12px;color:var(--muted);margin-top:6px">${r.note}</div>`:''}
+    </div>`).join('');
+  }
+}
+
+function renderRecruits() {
+  document.getElementById('recruitCount').textContent = DB.recruits.length + ' 位';
+  const el = document.getElementById('recruitList');
+  if (!DB.recruits.length) { el.innerHTML=`<div class="empty-state"><div class="empty-icon">🎯</div><div class="empty-text">尚無招募對象</div><div class="empty-sub">點右上角開始追蹤</div></div>`; return; }
+  const sc = {'尚未接觸':'tag-status-4','已聯絡':'tag-status-2','已面談':'tag-status-3','邀約商說':'tag-status-3','準備登錄':'tag-status-1','已登錄':'tag-status-1','暫緩':'tag-status-4','拒絕':'tag-status-4'};
+  el.innerHTML = DB.recruits.map(r => `<div class="recruit-card" onclick="openRecruitModal(DB.recruits.find(x=>x.id==='${r.id}'))">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><div style="font-size:15px;font-weight:700">${r.name}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${r.company||''} ${r.source?'· '+r.source:''}</div></div>
+      <span class="tag-chip ${sc[r.status]||'tag-status-4'}">${r.status}</span>
+    </div>
+    ${r.next?`<div style="font-size:12px;color:var(--gold);margin-top:6px">→ ${r.next}</div>`:''}
+    ${r.obstacle?`<div style="font-size:12px;color:var(--amber);margin-top:4px">⚡ ${r.obstacle}</div>`:''}
+  </div>`).join('');
+}
+
+// ── Export/Import ──
+function exportData() {
+  const blob = new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `crm-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  showToast('✅ 資料已匯出');
+}
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = evt => {
+    try { Object.assign(DB, JSON.parse(evt.target.result)); save(); renderDashboard(); renderClients(); showToast('✅ 資料已匯入'); }
+    catch { showToast('❌ 匯入失敗'); }
+  };
+  reader.readAsText(file);
+}
+function clearAllData() {
+  if (!confirm('確定要清除所有資料？此操作無法復原。')) return;
+  Object.keys(DB).forEach(k => DB[k]=[]);
+  save(); renderDashboard(); renderClients(); showToast('🗑️ 已清除');
+}
+
+// ── Toast ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Init ──
+load();
+const savedUser = localStorage.getItem('crmUser');
+if (savedUser) {
+  const u = JSON.parse(savedUser);
+  document.getElementById('loginScreen').style.display = 'none';
+  initApp(u.name, u.title||'保險業務顧問', u.gdrive||false);
+  if (u.gdrive) runDashboardAI();
+} else {
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+document.getElementById('loginName').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('loginTitle').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+</script>
+</body>
+</html>
